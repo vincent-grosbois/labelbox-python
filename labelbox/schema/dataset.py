@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-MAX_DATAROW_PER_API_OPERATION = 150_000
+MAX_DATAROW_PER_API_OPERATION = 1000000
 
 
 class Dataset(DbObject, Updateable, Deletable):
