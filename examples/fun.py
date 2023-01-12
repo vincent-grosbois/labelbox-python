@@ -12,13 +12,13 @@ class Mapper:
   def get_nested_annotation(self, nested_hierarchy, score):
     # Can confidence be provided in the nested classifications?
     if not len(nested_hierarchy):
-      return {}
+      return []
 
     if len(nested_hierarchy) % 2 != 0:
       raise ValueError("Must provide question and answer")
 
     current = {}
-    root = {'classifications' : [current]}
+    root = [current]
 
     for i in range(0,len(nested_hierarchy), 2):
       done = False
@@ -36,8 +36,6 @@ class Mapper:
       }
       current = child
     return root
-
-
 
   def get_bounding_box_annotation(self,
                               data_row_id: str,
@@ -60,7 +58,7 @@ class Mapper:
         },
         'dataRow' : {'id' : data_row_id},
         #**({'confidence' : score} if score is not None else {}),
-        **classifications
+        'classifications' : classifications
     }
 
   def get_classification_annotation(self,
@@ -76,7 +74,7 @@ class Mapper:
         'answer' : {
             'name' : class_hierarchy[1]
         },
-        **classifications
+        'classifications' : classifications
     }
 
 
