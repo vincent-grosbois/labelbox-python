@@ -21,16 +21,25 @@ class Mapper:
     root = {'classifications' : current}
 
     for i in range(0,len(nested_hierarchy), 2):
+      done = False
+      if len(nested_hierarchy) == 2 and i == 0:
+        done = True
+      elif len(nested_hierarchy)//2 == i:
+        done = True
 
+
+      print(i, len(nested_hierarchy))
       child = {}
       current['name'] = nested_hierarchy[i]
       current['answer'] = {
         'name' : nested_hierarchy[i + 1],
-        **({} if i == len(nested_hierarchy)//2 else {'classifications' : [child]})
+        **({} if done else {'classifications' : [child]})
         #'confidence' : score
       }
       current = child
     return root
+
+
 
   def get_bounding_box_annotation(self,
                               data_row_id: str,
