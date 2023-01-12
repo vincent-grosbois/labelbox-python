@@ -18,7 +18,7 @@ class Mapper:
       raise ValueError("Must provide question and answer")
 
     current = {}
-    root = {'classifications' : current}
+    root = {'classifications' : [current]}
 
     for i in range(0,len(nested_hierarchy), 2):
       done = False
