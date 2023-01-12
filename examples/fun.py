@@ -27,8 +27,6 @@ class Mapper:
       elif len(nested_hierarchy)//2 == i:
         done = True
 
-
-      print(i, len(nested_hierarchy))
       child = {}
       current['name'] = nested_hierarchy[i]
       current['answer'] = {
