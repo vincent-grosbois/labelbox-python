@@ -1,8 +1,7 @@
 from typing import Union, List, Literal, Tuple
 import numpy as np
+from copy import deepcopy
 from uuid import uuid4
-
-
 
 
 
@@ -18,16 +17,19 @@ class Mapper:
     if len(nested_hierarchy) % 2 != 0:
       raise ValueError("Must provide question and answer")
 
-    root = parent = {}
     current = {}
+    root = {'classifications' : current}
+
     for i in range(0,len(nested_hierarchy), 2):
+
+      child = {}
       current['name'] = nested_hierarchy[i]
       current['answer'] = {
         'name' : nested_hierarchy[i + 1],
-        'confidence' : score
+        **({} if i == len(nested_hierarchy)//2 else {'classifications' : [child]})
+        #'confidence' : score
       }
-      parent['classifications'] = current
-      current = parent
+      current = child
     return root
 
   def get_bounding_box_annotation(self,
@@ -44,13 +46,13 @@ class Mapper:
         'uuid' : str(uuid4()),
         'name' : class_hierarchy[0],
         'bbox' : {
-            'top' :    min_y,
-            'left' :   min_x,
-            'height' : max_y - min_y,
-            'width' :  max_x - min_x
+            'top' :    float(min_y),
+            'left' :   float(min_x),
+            'height' : float(max_y - min_y),
+            'width' :  float(max_x - min_x)
         },
         'dataRow' : {'id' : data_row_id},
-        **({'confidence' : score} if score is not None else {}),
+        #**({'confidence' : score} if score is not None else {}),
         **classifications
     }
 
@@ -69,8 +71,6 @@ class Mapper:
         },
         **classifications
     }
-
-
 
 
 
@@ -101,7 +101,7 @@ def get_object_ndjson(mapper: Mapper, data_row_ids: List[str], bboxes: np.ndarra
 
   for batch_idx in range(batch_size):
     for detection_idx in range(n_detections):
-      predicted_idx = argmax[detection_idx, batch_idx]
+      predicted_idx = argmax[batch_idx, detection_idx]
 
       if predicted_idx == 0:
         continue
@@ -111,7 +111,7 @@ def get_object_ndjson(mapper: Mapper, data_row_ids: List[str], bboxes: np.ndarra
             data_row_ids[batch_idx],
             np.squeeze(bboxes[batch_idx, detection_idx,:]),
             predicted_idx,
-            scores[batch_idx, detection_idx, argmax[detection_idx, batch_idx]],
+            scores[batch_idx, detection_idx, argmax[batch_idx, detection_idx]],
         )
     )
   return ndjson
