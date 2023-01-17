@@ -1,6 +1,8 @@
 name = "labelbox"
 __version__ = "3.34.0"
 
+print("Debugging...")
+
 from labelbox.client import Client
 from labelbox.schema.project import Project
 from labelbox.schema.model import Model

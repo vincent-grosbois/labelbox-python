@@ -208,10 +208,12 @@ class Dataset(DbObject, Updateable, Deletable):
             ){ taskId accepted errorMessage } } """ % (dataset_param, url_param,
                                                        dataset_param, url_param)
 
+        print("Attempting upload.....")
         res = self.client.execute(query_str, {
             dataset_param: self.uid,
             url_param: descriptor_url
         })
+        print("Upload succeeded")
         res = res["appendRowsToDataset"]
         if not res["accepted"]:
             msg = res['errorMessage']
@@ -430,9 +432,12 @@ class Dataset(DbObject, Updateable, Deletable):
             items = [future.result() for future in as_completed(futures)]
         # Prepare and upload the desciptor file
         data = json.dumps(items)
-        return self.client.upload_data(data,
+        print("Uploading the json contents to cloud storage")
+        content = self.client.upload_data(data,
                                        content_type="application/json",
                                        filename="json_import.json")
+        print("Done uploading the json contents to cloud storage")
+        return content
 
     def data_rows_for_external_id(self,
                                   external_id,
