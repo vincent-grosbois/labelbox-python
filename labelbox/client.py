@@ -378,6 +378,7 @@ class Client:
         elif response.status_code == 503:
             raise labelbox.exceptions.InternalServerError(response.text)
         elif response.status_code == 520:
+            print("Retrying a 520!!!!")
             raise labelbox.exceptions.InternalServerError(response.text)
 
 
