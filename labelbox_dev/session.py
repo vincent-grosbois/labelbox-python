@@ -20,6 +20,11 @@ _LABELBOX_API_KEY = "LABELBOX_API_KEY"
 
 class Session:
 
+    api_key: str
+    api_url: str
+    base_api_url: str
+    initialized: bool = False
+
     @classmethod
     def initialize(cls, base_api_url="https://api.labelbox.com", api_key=None):
         if api_key is None:
