@@ -1,11 +1,11 @@
-from typing import Any, List, Optional, TypedDict, Iterator
-import json
+from labelbox_dev.types import Any, Iterator, List, Optional, TypedDict, Union
 import os
 
 from labelbox_dev.entity import Entity
 from labelbox_dev.exceptions import LabelboxError
 from labelbox_dev.session import Session
 from labelbox_dev.task import BulkGetDataRowsTask, CreateDataRowsTask
+from labelbox_dev.pagination import IdentifierPaginator
 
 DATA_ROW_RESOURCE = "data-rows"
 
@@ -137,7 +137,10 @@ class DataRow(Entity):
         return DataRow(data_row_json)
 
     @staticmethod
-    def get_by_ids(data_row_ids, run_async: bool = False):
+    def get_by_ids(
+        data_row_ids,
+        run_async: bool = False
+    ) -> Union[Iterator["DataRow"], BulkGetDataRowsTask]:
         body = {'keys': data_row_ids, 'run_async': run_async}
 
         if run_async:
@@ -152,12 +155,14 @@ class DataRow(Entity):
                 )
             return BulkGetDataRowsTask.get_by_id(task_id)
 
-        data_rows_json = Session.post_request(f"{DATA_ROW_RESOURCE}/bulkget",
-                                              json=body)
-        return [DataRow(data_row_json) for data_row_json in data_rows_json]
+        return IdentifierPaginator(f"{DATA_ROW_RESOURCE}", DataRow,
+                                   data_row_ids)
 
     @staticmethod
-    def get_by_global_keys(global_keys, run_async: bool = False, page_size: int = 100) -> Iterator["DataRow"]:
+    def get_by_global_keys(
+        global_keys,
+        run_async: bool = False
+    ) -> Union[Iterator["DataRow"], BulkGetDataRowsTask]:
         body = {
             'keys': global_keys,
             'is_global_key': True,
@@ -174,50 +179,8 @@ class DataRow(Entity):
                     f"Failed to retrieve task information for `data_row.get_by_global_keys()` async operation"
                 )
             return BulkGetDataRowsTask.get_by_id(task_id)
-        
-        # for keys in create_batches(global_keys, page_size):
-        #     body['keys'] = keys
-        #     data_rows_json = Session.post_request(f"{DATA_ROW_RESOURCE}/bulkget",
-        #                                                 json=body)
-        #     data_rows = [DataRow(dr) for dr in data_rows_json]
-        #     yield from yield_list_as_iterator(data_rows)
-        #     # for data_row_json in data_rows_json:
-        #     #     yield DataRow(data_row_json)
-        @KeyPaginator(page_size)
-        def get_request(keys):
-            body['keys'] = keys
-            data_rows_json = Session.post_request(f"{DATA_ROW_RESOURCE}/bulkget",
-                                                        json=body)
-            data_rows = [DataRow(dr) for dr in data_rows_json]            
-            return data_rows
 
-        return get_request(global_keys)
-
-class KeyPaginator:
-
-    def __init__(self, func, page_size):
-        self.func = func
-        self.page_size = page_size
-
-    def __call__(self, *args):
-        all_ids = args[0]
-        rest = args[1:]
-        for batched_ids in create_batches(all_ids, self.page_size):
-            objects = self.func(batched_ids, rest)
-            for object in objects:
-                yield object
-
-
-def paginate(request_func, inputs, page_size):
-    for keys in create_batches(inputs, page_size):
-        objects = request_func(keys)
-        yield from yield_list_as_iterator(objects)
-
-def create_batches(objects, batch_size=100):
-    for i in range(0, len(objects), batch_size):
-        if i < len(objects):
-            yield objects[i:i+batch_size]
-
-def yield_list_as_iterator(objects):
-    for object in objects:
-        yield object
+        return IdentifierPaginator(f"{DATA_ROW_RESOURCE}",
+                                   DataRow,
+                                   global_keys,
+                                   identifiers_key='global_keys')

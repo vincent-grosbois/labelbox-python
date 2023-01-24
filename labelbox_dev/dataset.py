@@ -1,5 +1,4 @@
-from typing import Optional, TypedDict
-
+from labelbox_dev.types import Optional, TypedDict
 from labelbox_dev.entity import Entity
 from labelbox_dev.session import Session
 

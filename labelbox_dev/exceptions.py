@@ -37,3 +37,7 @@ class NetworkError(LabelboxError):
 class TimeoutError(LabelboxError):
     """Raised when a request times-out."""
     pass
+
+
+class ServiceError(LabelboxError):
+    """Raised if response from API service is unexpected."""
