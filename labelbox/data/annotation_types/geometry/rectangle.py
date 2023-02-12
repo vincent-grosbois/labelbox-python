@@ -1,9 +1,11 @@
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, TYPE_CHECKING
 
 import cv2
 import geojson
 import numpy as np
-from shapely.geometry import Polygon as SPolygon
+
+if not TYPE_CHECKING:
+    from shapely.geometry import Polygon as SPolygon
 
 from .geometry import Geometry
 from .point import Point

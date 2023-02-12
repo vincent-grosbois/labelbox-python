@@ -1,10 +1,12 @@
-from typing import Dict, Any, Optional, Union, Tuple
+from typing import Dict, Any, Optional, Union, Tuple, TYPE_CHECKING
 from abc import ABC, abstractmethod
 
 import geojson
 import numpy as np
-from shapely import geometry as geom
 from pydantic import BaseModel
+
+if not TYPE_CHECKING:
+    from shapely import geometry as geom
 
 
 class Geometry(BaseModel, ABC):

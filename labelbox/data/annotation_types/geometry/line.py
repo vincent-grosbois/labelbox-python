@@ -1,10 +1,12 @@
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, TYPE_CHECKING
 
 import geojson
 import numpy as np
 import cv2
 from pydantic import validator
-from shapely.geometry import LineString as SLineString
+
+if not TYPE_CHECKING:
+    from shapely.geometry import LineString as SLineString
 
 from .point import Point
 from .geometry import Geometry

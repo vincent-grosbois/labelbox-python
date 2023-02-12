@@ -41,6 +41,8 @@ from labelbox.schema.media_type import MediaType, get_media_type_validation_erro
 logger = logging.getLogger(__name__)
 
 _LABELBOX_API_KEY = "LABELBOX_API_KEY"
+_LABELBOX_ENDPOINT = "LABELBOX_ENDPOINT"
+DEFAULT_LABELBOX_ENDPOINT = 'https://api.labelbox.com/graphql'
 
 
 class Client:
@@ -53,7 +55,7 @@ class Client:
 
     def __init__(self,
                  api_key=None,
-                 endpoint='https://api.labelbox.com/graphql',
+                 endpoint=None,
                  enable_experimental=False,
                  app_url="https://app.labelbox.com"):
         """ Creates and initializes a Labelbox Client.
@@ -79,6 +81,12 @@ class Client:
                 raise labelbox.exceptions.AuthenticationError(
                     "Labelbox API key not provided")
             api_key = os.environ[_LABELBOX_API_KEY]
+
+        if endpoint is None:
+            if _LABELBOX_ENDPOINT in os.environ:
+                endpoint = os.environ[_LABELBOX_ENDPOINT]
+            else:
+                endpoint = DEFAULT_LABELBOX_ENDPOINT
         self.api_key = api_key
 
         self.enable_experimental = enable_experimental

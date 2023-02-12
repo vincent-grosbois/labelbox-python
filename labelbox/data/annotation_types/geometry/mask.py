@@ -1,9 +1,11 @@
-from typing import Callable, Optional, Tuple, Union, Dict, List
+from typing import Callable, Optional, Tuple, Union, Dict, List, TYPE_CHECKING
 
 import numpy as np
 from pydantic.class_validators import validator
-from shapely.geometry import MultiPolygon, Polygon
 import cv2
+
+if not TYPE_CHECKING:
+    from shapely.geometry import MultiPolygon, Polygon
 
 from ..data import MaskData
 from .geometry import Geometry

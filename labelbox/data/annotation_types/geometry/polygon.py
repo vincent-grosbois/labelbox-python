@@ -1,10 +1,12 @@
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, TYPE_CHECKING
 
 import cv2
 import geojson
 import numpy as np
 from pydantic import validator
-from shapely.geometry import Polygon as SPolygon
+
+if not TYPE_CHECKING:
+    from shapely.geometry import Polygon as SPolygon
 
 from .geometry import Geometry
 from .point import Point
