@@ -1,16 +1,16 @@
 from itertools import groupby
 from operator import itemgetter
-from typing import Dict, Generator, List, Optional, Tuple, Union
+from typing import Dict, Generator, List, Tuple, Union
 from collections import defaultdict
 import warnings
 
 from pydantic import BaseModel
 
 from ...annotation_types.annotation import ClassificationAnnotation, ObjectAnnotation
-from ...annotation_types.video import DICOMObjectAnnotation, VideoClassificationAnnotation
-from ...annotation_types.video import VideoObjectAnnotation, VideoMaskAnnotation
+from ...annotation_types.video import VideoObjectAnnotation, VideoMaskAnnotation, VideoClassificationAnnotation
+from ...annotation_types.video import DICOMObjectAnnotation, DICOMMaskAnnotation
 from ...annotation_types.collection import LabelCollection, LabelGenerator
-from ...annotation_types.data import DicomData, ImageData, TextData, VideoData
+from ...annotation_types.data import DicomData, ImageData, TextData, VideoData, BaseData
 from ...annotation_types.label import Label
 from ...annotation_types.ner import TextEntity, ConversationEntity
 from ...annotation_types.classification import Dropdown
@@ -92,13 +92,12 @@ class NDLabel(BaseModel):
             raise ValueError("Missing annotations while inferring media type")
 
         types = {type(annotation) for annotation in annotations}
-        data = ImageData
-        if (TextEntity in types) or (ConversationEntity in types):
-            data = TextData
-        elif VideoClassificationAnnotation in types or VideoObjectAnnotation in types:
+        if VideoClassificationAnnotation in types or VideoObjectAnnotation in types:
             data = VideoData
-        elif DICOMObjectAnnotation in types:
+        elif DICOMObjectAnnotation in types or DICOMMaskAnnotation in types:
             data = DicomData
+        else:
+            data = BaseData
 
         if data_row.id:
             return data(uid=data_row.id)
