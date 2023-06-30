@@ -9,7 +9,7 @@
 * Improved batch creation logic when more than 1000 global keys provided
 
 ## Notebooks
-* Added example on how to access mark in export v2
+* Added example on how to access mask URL in export v2
 * Removed NDJSON library from `examples/basics/custom_embeddings.ipynb`
 * Removed `queue_mode` property from `create_project()` method call.
 
