@@ -896,6 +896,10 @@ class Client:
         Returns:
             PaginatedCollection of FeatureSchemas with names that match `name_contains`
         """
+        if name_contains is None or name_contains == "":
+            raise labelbox.exceptions.InvalidQueryError(
+                "name_contains cannot be None or empty.")
+
         query_str = """query rootSchemaNodesPyApi($search: String, $filter: RootSchemaNodeFilter, $from : String, $first: PageSize){
             rootSchemaNodes(where: {filter: $filter, search: $search}, after: $from, first: $first){
                 nodes {%s}

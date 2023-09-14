@@ -1,7 +1,7 @@
 import pytest
 
-from labelbox.exceptions import InconsistentOntologyException
-from labelbox import Tool, Classification, Option, OntologyBuilder
+from labelbox.exceptions import InconsistentOntologyException, InvalidQueryError
+from labelbox import Tool, Classification, Option, OntologyBuilder, client
 
 _SAMPLE_ONTOLOGY = {
     "tools": [{
@@ -255,3 +255,11 @@ def test_classification_using_instructions_instead_of_name_shows_warning():
 def test_classification_without_name_raises_error():
     with pytest.raises(ValueError):
         Classification(class_type=Classification.Type.TEXT)
+
+
+def test_feature_schemas_with_none():
+    with pytest.raises(InvalidQueryError):
+        client.Client(api_key='any').get_feature_schemas(None)
+
+    with pytest.raises(InvalidQueryError):
+        next(client.Client(api_key='any').get_feature_schemas(None))
