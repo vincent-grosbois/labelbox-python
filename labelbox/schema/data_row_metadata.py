@@ -8,10 +8,11 @@ import warnings
 from typing import List, Optional, Dict, Union, Callable, Type, Any, Generator, overload
 
 from pydantic import BaseModel, conlist, constr
+from labelbox.schema.identifiable import UniqueId, GlobalKey
 from labelbox.schema.identifiables import DataRowIdentifiers, UniqueIds
 
 from labelbox.schema.ontology import SchemaId
-from labelbox.utils import _CamelCaseMixin, format_iso_datetime, format_iso_from_string
+from labelbox.utils import _CamelCaseMixin, camel_case, format_iso_datetime, format_iso_from_string
 
 
 class DataRowMetadataKind(Enum):
@@ -61,6 +62,14 @@ class DeleteDataRowMetadata(_CamelCaseMixin):
     fields: List[SchemaId]
 
 
+class DeleteDataRowMetadataV2(_CamelCaseMixin):
+    data_row_id: Union[UniqueId, GlobalKey]
+    fields: List[SchemaId]
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class DataRowMetadataBatchResponse(_CamelCaseMixin):
     global_key: Optional[str]
     data_row_id: Optional[str]
@@ -85,13 +94,32 @@ class _UpsertBatchDataRowMetadata(_CamelCaseMixin):
     fields: List[_UpsertDataRowMetadataInput]
 
 
-class _DeleteBatchDataRowMetadata(_CamelCaseMixin):
-    data_row_id: str
+class _DeleteBatchDataRowMetadataV2(_CamelCaseMixin):
+    data_row_identifier: Union[UniqueId, GlobalKey]
     schema_ids: List[SchemaId]
+
+    class Config:
+        arbitrary_types_allowed = True
+        alias_generator = camel_case
+
+    def dict(self, *args, **kwargs):
+        res = super().dict(*args, **kwargs)
+        if 'data_row_identifier' in res.keys():
+            key = 'data_row_identifier'
+            id_type_key = 'id_type'
+        else:
+            key = 'dataRowIdentifier'
+            id_type_key = 'idType'
+        data_row_identifier = res.pop(key)
+        res[key] = {
+            "id": data_row_identifier.key,
+            id_type_key: data_row_identifier.id_type
+        }
+        return res
 
 
 _BatchInputs = Union[List[_UpsertBatchDataRowMetadata],
-                     List[_DeleteBatchDataRowMetadata]]
+                     List[_DeleteBatchDataRowMetadataV2]]
 _BatchFunction = Callable[[_BatchInputs], List[DataRowMetadataBatchResponse]]
 
 
@@ -550,13 +578,36 @@ class DataRowMetadataOntology:
         res = _batch_operations(_batch_upsert, items, self._batch_size)
         return res
 
+    @overload
     def bulk_delete(
         self, deletes: List[DeleteDataRowMetadata]
+    ) -> List[DataRowMetadataBatchResponse]:
+        pass
+
+    @overload
+    def bulk_delete(
+        self, deletes: List[DeleteDataRowMetadataV2]
+    ) -> List[DataRowMetadataBatchResponse]:
+        pass
+
+    def bulk_delete(
+        self, deletes: List[Union[DeleteDataRowMetadata,
+                                  DeleteDataRowMetadataV2]]
     ) -> List[DataRowMetadataBatchResponse]:
         """ Delete metadata from a datarow by specifiying the fields you want to remove
 
         >>> delete = DeleteDataRowMetadata(
-        >>>                 data_row_id="datarow-id",
+        >>>                 data_row_id=UniqueId("datarow-id"),
+        >>>                 fields=[
+        >>>                        "schema-id-1",
+        >>>                        "schema-id-2"
+        >>>                        ...
+        >>>                    ]
+        >>>    )
+        >>> mdo.batch_delete([metadata])
+
+        >>> delete = DeleteDataRowMetadata(
+        >>>                 data_row_id=GlobalKey("global-key"),
         >>>                 fields=[
         >>>                        "schema-id-1",
         >>>                        "schema-id-2"
@@ -567,6 +618,8 @@ class DataRowMetadataOntology:
 
         Args:
             deletes: Data row and schema ids to delete
+                For data row, we support UniqueId, str, and GlobalKey. 
+                If you pass a str, we will assume it is a UniqueId
 
         Returns:
             list of unsuccessful deletions.
@@ -575,13 +628,22 @@ class DataRowMetadataOntology:
         """
 
         if not len(deletes):
-            raise ValueError("Empty list passed")
+            raise ValueError("The 'deletes' list cannot be empty.")
+
+        if isinstance(deletes, list) and len(deletes) > 0 and isinstance(
+                deletes[0], DeleteDataRowMetadata):
+            deletes = [
+                DeleteDataRowMetadataV2(data_row_id=UniqueId(d.data_row_id),
+                                        fields=d.fields) for d in deletes
+            ]
+            warnings.warn("Using data row ids will be deprecated. Please use "
+                          "UniqueIds or GlobalKeys instead.")
 
         def _batch_delete(
-            deletes: List[_DeleteBatchDataRowMetadata]
+            deletes: List[_DeleteBatchDataRowMetadataV2]
         ) -> List[DataRowMetadataBatchResponse]:
-            query = """mutation DeleteDataRowMetadataBetaPyApi($deletes: [DataRowCustomMetadataBatchDeleteInput!]!) {
-                deleteDataRowCustomMetadata(data: $deletes) {
+            query = """mutation DeleteDataRowMetadataBetaPyApi($deletes: [DataRowIdentifierCustomMetadataBatchDeleteInput!]) {
+                deleteDataRowCustomMetadata(dataRowIdentifiers: $deletes) {
                     dataRowId
                     error
                     fields {
@@ -789,7 +851,7 @@ class DataRowMetadataOntology:
 
         return [_UpsertDataRowMetadataInput(**p) for p in parsed]
 
-    def _validate_delete(self, delete: DeleteDataRowMetadata):
+    def _validate_delete(self, delete: DeleteDataRowMetadataV2):
         if not len(delete.fields):
             raise ValueError(f"No fields specified for {delete.data_row_id}")
 
@@ -809,8 +871,8 @@ class DataRowMetadataOntology:
 
             deletes.add(schema.uid)
 
-        return _DeleteBatchDataRowMetadata(
-            data_row_id=delete.data_row_id,
+        return _DeleteBatchDataRowMetadataV2(
+            data_row_identifier=delete.data_row_id,
             schema_ids=list(delete.fields)).dict(by_alias=True)
 
     def _validate_custom_schema_by_name(self,
