@@ -286,6 +286,7 @@ class Client:
         malformed_request_error = check_errors(["MALFORMED_REQUEST"],
                                                "extensions", "code")
         if malformed_request_error is not None:
+            print("YAMINI HERE AT MALFORMED EXCEPTION")
             raise labelbox.exceptions.MalformedQueryException(
                 malformed_request_error[error_log_key])
 

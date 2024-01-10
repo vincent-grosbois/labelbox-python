@@ -237,8 +237,6 @@ class Project(DbObject, Updateable, Deletable):
             id_param, id_param, where, order_by_str,
             query.results_query_part(Label))
 
-        print(query_str)
-
         return PaginatedCollection(self.client, query_str, {id_param: self.uid},
                                    ["project", "labels"], Label)
 
