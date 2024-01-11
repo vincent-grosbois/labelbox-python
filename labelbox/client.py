@@ -222,6 +222,8 @@ class Client:
                 "Failed to parse response as JSON: %s" % response.text)
 
         errors = r_json.get("errors", [])
+        print("YAMINI ERRORS")
+        print(errors)
 
         def check_errors(keywords, *path):
             """ Helper that looks for any of the given `keywords` in any of
@@ -238,18 +240,22 @@ class Client:
         def get_error_status_code(error):
             return error["extensions"].get("exception").get("status")
 
+        print("YAMINI ERRORS1")
         if check_errors(["AUTHENTICATION_ERROR"], "extensions",
                         "code") is not None:
             raise labelbox.exceptions.AuthenticationError("Invalid API key")
 
         authorization_error = check_errors(["AUTHORIZATION_ERROR"],
                                            "extensions", "code")
+        print("YAMINI ERRORS2")
         if authorization_error is not None:
             raise labelbox.exceptions.AuthorizationError(
                 authorization_error["message"])
 
         validation_error = check_errors(["GRAPHQL_VALIDATION_FAILED"],
                                         "extensions", "code")
+
+        print("YAMINI ERRORS3")
 
         if validation_error is not None:
             message = validation_error["message"]
@@ -260,6 +266,8 @@ class Client:
 
         graphql_error = check_errors(["GRAPHQL_PARSE_FAILED"], "extensions",
                                      "code")
+
+        print("YAMINI ERRORS4")
         if graphql_error is not None:
             raise labelbox.exceptions.InvalidQueryError(
                 graphql_error["message"])
@@ -267,11 +275,13 @@ class Client:
         # Check if API limit was exceeded
         response_msg = r_json.get("message", "")
 
+        print("YAMINI ERRORS5")
         if response_msg.startswith("You have exceeded"):
             raise labelbox.exceptions.ApiLimitError(response_msg)
 
         resource_not_found_error = check_errors(["RESOURCE_NOT_FOUND"],
                                                 "extensions", "code")
+        print("YAMINI ERRORS6")
         if resource_not_found_error is not None:
             # Return None and let the caller methods raise an exception
             # as they already know which resource type and ID was requested
@@ -279,22 +289,28 @@ class Client:
 
         resource_conflict_error = check_errors(["RESOURCE_CONFLICT"],
                                                "extensions", "code")
+
+        print("YAMINI ERRORS7")
         if resource_conflict_error is not None:
             raise labelbox.exceptions.ResourceConflict(
                 resource_conflict_error["message"])
 
         malformed_request_error = check_errors(["MALFORMED_REQUEST"],
                                                "extensions", "code")
+
+        print("YAMINI ERRORS8")
         if malformed_request_error is not None:
-            print("YAMINI HERE AT MALFORMED EXCEPTION")
             raise labelbox.exceptions.MalformedQueryException(
                 malformed_request_error[error_log_key])
 
         # A lot of different error situations are now labeled serverside
         # as INTERNAL_SERVER_ERROR, when they are actually client errors.
         # TODO: fix this in the server API
+
         internal_server_error = check_errors(["INTERNAL_SERVER_ERROR"],
                                              "extensions", "code")
+
+        print("YAMINI ERRORS9")
         if internal_server_error is not None:
             message = internal_server_error.get("message")
 
@@ -307,6 +323,8 @@ class Client:
 
         not_allowed_error = check_errors(["OPERATION_NOT_ALLOWED"],
                                          "extensions", "code")
+
+        print("YAMINI ERRORS10")
         if not_allowed_error is not None:
             message = not_allowed_error.get("message")
             raise labelbox.exceptions.OperationNotAllowedException(message)
