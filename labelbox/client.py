@@ -318,7 +318,8 @@ class Client:
 
         if not_allowed_error is not None:
             message = not_allowed_error.get("message")
-            print(sys._getframe(1).f_code.co_name + " " + message)
+            print({sys._getframe(1).f_code.co_name})
+            print(message)
             raise labelbox.exceptions.OperationNotAllowedException(message)
 
         if len(errors) > 0:
